@@ -4,6 +4,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import fs from "fs";
 
 // Utiles
 import connectDB from "./config/db.js";
@@ -46,13 +47,19 @@ app.get("/api/config/paypal", (req, res) => {
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname + "/uploads")));
 
-// Serve frontend build in production
+// Serve frontend build in production (only if it exists)
 if (process.env.NODE_ENV !== "development") {
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+  const frontendDistPath = path.join(__dirname, "/frontend/dist");
+  
+  if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
 
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"))
-  );
+    app.get("*", (req, res) =>
+      res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"))
+    );
+  } else {
+    console.log("Frontend build not found. Serving API only.");
+  }
 }
 
 app.listen(port, () => console.log(`Server running on port: ${port}`));
